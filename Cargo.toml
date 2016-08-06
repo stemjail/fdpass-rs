@@ -1,0 +1,15 @@
+[package]
+name = "fdpass"
+version = "0.1.0"
+authors = ["Mickaël Salaün <mic@digikod.net>"]
+description = "File descriptor passing through UNIX socket"
+repository = "https://github.com/stemjail/fdpass-rs"
+readme = "README.md"
+keywords = ["linux", "fd", "unix", "socket", "cmsg"]
+license = "LGPL-3.0"
+exclude = [".gitignore"]
+
+[dependencies]
+fd = "0.2"
+libc = "0.2"
+unix_socket = "0.5"

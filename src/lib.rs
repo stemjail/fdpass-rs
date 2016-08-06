@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Mickaël Salaün
+// Copyright (C) 2014-2016 Mickaël Salaün
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -14,12 +14,18 @@
 
 #![allow(deprecated)]
 
+extern crate fd;
+extern crate libc;
+extern crate unix_socket;
+
 use fd::FileDesc;
-use ffi::net;
+use ffi::{Cmsghdr, Iovec, Msghdr, Scm, SOL_SOCKET, recvmsg, sendmsg};
 use libc::{size_t, c_void};
 use std::io;
 use std::os::unix::io::{AsRawFd, RawFd};
 use unix_socket::UnixStream;
+
+mod ffi;
 
 #[repr(C)]
 struct FdPadding {
@@ -47,7 +53,7 @@ impl FdPadding {
 
 pub fn recv_fd(stream: &mut UnixStream, iov_expect: Vec<u8>) -> io::Result<FileDesc> {
     let fd = FdPadding::new(-1 as RawFd);
-    match net::recvmsg(stream, iov_expect.len(), fd) {
+    match recvmsg(stream, iov_expect.len(), fd) {
         // TODO: Check size?
         Ok((_, iov_recv, data)) => {
             if iov_recv != iov_expect {
@@ -60,14 +66,14 @@ pub fn recv_fd(stream: &mut UnixStream, iov_expect: Vec<u8>) -> io::Result<FileD
 }
 
 pub fn send_fd(stream: &mut UnixStream, id: &[u8], fd: &AsRawFd) -> io::Result<()> {
-    let mut iovv = vec!(net::Iovec {
+    let mut iovv = vec!(Iovec {
         iov_base: id.as_ptr() as *const c_void,
         iov_len: id.len() as size_t,
     });
     let fda = FdPadding::new(fd.as_raw_fd());
-    let mut ctrl = net::Cmsghdr::new(net::SOL_SOCKET, net::Scm::Rights, fda);
-    let msg = net::Msghdr::new(None, &mut iovv, &mut ctrl, None);
-    match net::sendmsg(stream, &msg) {
+    let mut ctrl = Cmsghdr::new(SOL_SOCKET, Scm::Rights, fda);
+    let msg = Msghdr::new(None, &mut iovv, &mut ctrl, None);
+    match sendmsg(stream, &msg) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
     }
