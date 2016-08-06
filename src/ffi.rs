@@ -20,7 +20,7 @@ use std::mem::transmute;
 use std::os::unix::io::AsRawFd;
 use std::ptr;
 
-pub mod raw {
+mod raw {
     use libc::{c_int, ssize_t, c_void};
 
     #[cfg(target_arch="x86_64")]
